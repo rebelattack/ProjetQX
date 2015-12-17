@@ -1,4 +1,6 @@
 import java.net.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.io.*;
 
 public class ComsClient implements Runnable
@@ -12,16 +14,17 @@ public class ComsClient implements Runnable
 	private ComsClientThread         client = null;
 	
 	
-	private String name = null;
+	private String name = "LIDAR_PC";
+	private String remotePeerName = "LIDAR_DRONE";
 	
 	private int pingDelay = 1000; // delay between each ping
 	private int connectionDelay = 2000; // delay before try another connection
 	
-	public ComsClient(String _serverName, int _serverPort, String _name)
+	public ComsClient(String _serverName, int _serverPort)
 	{  
 		serverName = _serverName;
 		serverPort = _serverPort;
-		name = _name;
+		//name = _name;
 		connect();
 		
 	}
@@ -33,12 +36,27 @@ public class ComsClient implements Runnable
 	
 	 public void handle(String msg)
 	   {  
-		 if (msg.equals(".bye"))
-	      {  System.out.println("Good bye. Press RETURN to exit ...");
-	         stop();
-	      }
-	      else
-	         System.out.println(msg);
+		 	
+	        
+		 	if (msg.equals(":stop:"))
+		 	{
+		 		System.out.println("Good bye. Press RETURN to exit ...");
+		 		stop();
+		 	}
+		 	else
+		 	{
+		 		PrintWriter writer;
+				try {
+					writer = new PrintWriter("output.txt", "UTF-8");
+					writer.println(msg);			 		
+			 		writer.close();
+				} catch (FileNotFoundException | UnsupportedEncodingException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+		 		
+		 	}
+	         
 	   }
 	
 	private void connect()
@@ -146,8 +164,26 @@ public class ComsClient implements Runnable
             stop();
         }
 	}
-   
 	
+	public void newAcquisition()
+	{
+		sendTo(remotePeerName,":newacquisition:");
+	}
+   
+	public static void main(String args[])
+	{  
+		
+		
+		if(args.length != 3)
+		{
+			System.out.println("Usage : java -jar serveur.jar <server_ip> <port> <client_name>");
+		}else{
+			ComsClient client = new ComsClient(args[0],Integer.parseInt(args[1]));
+			client.newAcquisition();
+		}
+		
+		
+	}
 
 
 
